@@ -1,46 +1,51 @@
-import RPi.GPIO as GPIO
-import time
-GPIO.setmode(GPIO.BCM)
-leds = [16, 12, 25, 17, 27, 23, 22, 24]
-for pin in leds:
-    GPIO.setup(pin, GPIO.OUT)
-for pin in leds:
-    GPIO.output(pin, GPIO.LOW)
-up_button = 5    # Кнопка "вверх"
-down_button = 6  # Кнопка "вниз"
-GPIO.setup(up_button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(down_button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-num = 0
-MAX_VALUE = 255  # Максимальное значение для 8 бит
-sleep_time = 0.2# Время паузы после нажатия кнопки
-def dec2bin(n):# Функция для преобразования числа в двоичное представление
-    bin_str = bin(n)[2:].zfill(8)
-    return [int(bit) for bit in bin_str]
-def display_binary(n):# Функция для отображения числа на светодиодах
-    binary = dec2bin(n)
-    for i in range(8):
-        GPIO.output(leds[i], GPIO.HIGH if binary[i] == 1 else GPIO.LOW)
+import RPi.GPIO as GPIO # подкл рп и иное название
+import time # импорт библиотеки времени
 
-try:
-        num = MAX_VALUE# Устанавливаем максимальное значение при запуске
-    display_binary(num)
-    print(f"Установлено максимальное значение: {num}, двоичное: {dec2bin(num)}")
-        while True:
-        if GPIO.input(up_button):# Обработка кнопки "вверх"
-            if num < MAX_VALUE:
-                num += 1
-            else:
-                num = 0  # Сброс к 0 при достижении максимума
-            print(f"Число: {num}, Двоичное: {dec2bin(num)}")
-            display_binary(num)
-            time.sleep(sleep_time)
-        if GPIO.input(down_button):# Обработка кнопки "вниз"
-            if num > 0:
-                num -= 1
-            else:
-                num = MAX_VALUE  # Установка максимума при достижении 0
-            print(f"Число: {num}, Двоичное: {dec2bin(num)}")
-            display_binary(num)
-            time.sleep(sleep_time)
+GPIO.setmode(GPIO.BCM) # подключаем бсм
+
+leds = [16, 12, 25, 17, 27, 23, 22, 24] #подкл пины светодиодов
+GPIO.setup(leds, GPIO.OUT, initial=0) # Настраиваем все GPIO-пины в списке на выход
+
+up_button = 9    # Пин для кнопки "вверх"
+down_button = 10  # Пин для кнопки "вниз"
+GPIO.setup(up_button, GPIO.IN) #цифровой вход на пин
+GPIO.setup(down_button, GPIO.IN) #цифровой вход на пин
+
+def dec2bin(value):# Функция для преобразования числа в двоичное представление
+    return [int(element) for element in bin(value)[2:].zfill(8)]# Преобразуем строку в список целых чисел (битов)
+
+num = 0 # Создаем переменную для хранения текущего числа
+sleep_time = 0.2 # Время паузы после нажатия кнопки
+
+while True:
+
+    if GPIO.input(down_button) and GPIO.input(up_button):# обработка двух кнопок одновременно
+        num = 255
+
+        binary = dec2bin(num)
+        print(num, binary)
+        GPIO.output(leds, binary)
+        time.sleep(sleep_time)
+   
+    elif GPIO.input(up_button): # Обработка кнопки "вверх
+        num += 1
+
+        if num > 255:
+            num = 255
         
-        time.sleep(0.01)
+        binary = dec2bin(num)
+        print(num, binary)
+        GPIO.output(leds, binary)
+        time.sleep(sleep_time)
+
+    elif GPIO.input(down_button):# Обработка кнопки "вниз"
+        num -= 1
+
+        if num < 0:
+            num = 0
+        
+        binary = dec2bin(num)
+        print(num, binary)
+        GPIO.output(leds, binary)
+        time.sleep(sleep_time)
+
